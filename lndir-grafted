@@ -1,0 +1,179 @@
+#!/usr/bin/env bash
+
+set -e -u -o pipefail
+
+FROMDIR=""
+TODIR=""
+
+function fail {
+	echo "$1" >&2
+	exit 1
+}
+
+# function escape_hyphen {
+# 	if [[ "${1:0:1}" == "-" ]]; then
+# 		echo "\\$1"
+# 	else
+# 		echo "$1"
+# 	fi
+# }
+
+function deescape_hyphen {
+	if [[ "${1:0:2}" == "\\-" ]]; then
+		echo "${1:1}"
+	else
+		echo "$1"
+	fi
+}
+
+if [[ "$#" -eq 0 ]]; then
+	fail "Require FROMDIR and TODIR"
+fi
+
+declare -a ARR_FROMBASEDIR=()
+declare -a ARR_TOBASEDIR=()
+NO_DEFAULT_GRAFTING=false
+MKDIR_COMMAND="mkdir"
+SYMLINK_COMMAND="ln -s"
+READLINK_COMMAND="readlink"
+
+while [[ "$#" -gt 0 ]]; do
+	case "$1" in
+		-h|--help)
+			cat<<END_HELP_MESSAGE
+Usage:
+    lndir-grafted [OPTIONS] FROMDIR TODIR
+    lndir-grafted [OPTIONS] -- FROMDIR TODIR
+    lndir-grafted FROMDIR TODIR --graft FROMBASEDIR1 TOBASEDIR1 --graft FROMBASEDIR2 TOBASEDIR2
+
+lndir alternative that properly graft the symbolic links
+
+Note:
+    Specified path will be thought of as absolute
+    or start from this workspace path and share the same prefix.
+    If there is a leading hyphen ("-..."), it should be escaped ("\\-...")
+    No extra trailing path delimiter is expected.
+
+Options:
+  --help                    Print this help message and exit
+
+  --graft FROMBASEDIR TOBASEDIR      If the target of a symlink
+                            begins with \$FROMBASEDIR,
+                            the preceeding part of the target
+                            will be replaced with \$TOBASEDIR
+                            This can be specified multiple times
+                            and substitutions will be done respectively.
+                            However, at most one substitution will be done
+                            for each target path.
+                            Assume trailing \`--graft \$FROMDIR \$TODIR\`
+
+  --no-default-grafting     Opt-out the default behavior of
+                            \`--graft \$FROMDIR \$TODIR\`
+
+  --mkdir-command MKDIR_COMMAND     Specify the command
+                            to create a directory by
+                            \`\$MKDIR_COMMAND "path/to/directory"\`
+                            Default to "mkdir"
+
+  --symlink-command SYMLINK_COMMAND     Specify the command
+                            to create a symbolic link by
+                            \`\$SYMLINK_COMMAND "symlink/target/content" "path/to/symlink"\`
+                            Default to "ln -s"
+
+  --readlink-command SYMLINK_COMMAND     Specify the command
+                            to read the target of a symbolic link by
+                            \`\$READLINK_COMMAND "path/to/symlink"\`
+                            Default to "readlink"
+END_HELP_MESSAGE
+			exit 0
+			;;
+		--graft)
+			if [[ "$#" -lt 2 ]]; then
+				fail "Require FROMBASEDIR TOBASEDIR after $1"
+			fi
+			ARR_FROMBASEDIR+=("$(deescape_hyphen "$2")")
+			ARR_TOBASEDIR+=("$(deescape_hyphen "$3")")
+			shift 3
+			;;
+		--no-default-grafting)
+			NO_DEFAULT_GRAFTING=true
+			shift
+			;;
+		--mkdir-command)
+			if [[ "$#" -lt 1 ]]; then
+				fail "Require MKDIR_COMMAND after $1"
+			fi
+			MKDIR_COMMAND="$2"
+			shift 2
+			;;
+		--symlink-command)
+			if [[ "$#" -lt 1 ]]; then
+				fail "Require SYMLINK_COMMAND after $1"
+			fi
+			SYMLINK_COMMAND="$2"
+			shift 2
+			;;
+		--readlink-command)
+			if [[ "$#" -lt 1 ]]; then
+				fail "Require READLINK_COMMAND after $1"
+			fi
+			READLINK_COMMAND="$2"
+			shift 2
+			;;
+		--)
+			if [[ "$#" -lt 2 ]]; then
+				fail "Require FROMDIR TODIR"
+			fi
+			FROMDIR="$(deescape_hyphen "$2")"
+			TODIR="$(deescape_hyphen "$3")"
+			shift 3
+			break
+			;;
+		-*)
+			fail "Unexpected argument $1"
+			;;
+		*)
+			if [[ "$#" -lt 2 ]]; then
+				fail "Require FROMDIR TODIR"
+			fi
+			FROMDIR="$(deescape_hyphen "$1")"
+			TODIR="$(deescape_hyphen "$2")"
+			shift 2
+			;;
+	esac
+done
+
+LENGTH_FROMDIR="${#FROMDIR}"
+
+if ! $NO_DEFAULT_GRAFTING; then
+	ARR_FROMBASEDIR+=("$FROMDIR")
+	ARR_TOBASEDIR+=("$TODIR")
+fi
+
+N_BASEDIR="${#ARR_FROMBASEDIR[@]}"
+
+while IFS= read -d $'\0' -r ORIGINAL_DIR; do
+	$MKDIR_COMMAND "$TODIR${ORIGINAL_DIR:$LENGTH_FROMDIR}"
+done < <(find "$FROMDIR" -mindepth 1 -type d -print0)
+
+while IFS= read -d $'\0' -r ORIGINAL_FILE; do
+	$SYMLINK_COMMAND "$ORIGINAL_FILE" "$TODIR${ORIGINAL_FILE:$LENGTH_FROMDIR}"
+done < <(find "$FROMDIR" -mindepth 1 -type f -print0)
+
+while IFS= read -d $'\0' -r ORIGINAL_LINK; do
+	NEW_SYMLINK="$TODIR${ORIGINAL_LINK:$LENGTH_FROMDIR}"
+	ORIGINAL_TARGET="$($READLINK_COMMAND "$ORIGINAL_LINK")"
+	LENGTH_ORIGINAL_TARGET="${#ORIGINAL_TARGET}"
+	NEW_TARGET="$ORIGINAL_TARGET"
+	for ((INDEX_BASEDIR=0;INDEX_BASEDIR<N_BASEDIR;INDEX_BASEDIR++)); do
+		FROMBASEDIR="${ARR_FROMBASEDIR[$INDEX_BASEDIR]}"
+		LENGTH_FROMBASEDIR="${#FROMBASEDIR}"
+		TOBASEDIR="${ARR_TOBASEDIR[$INDEX_BASEDIR]}"
+		if [[ "$LENGTH_ORIGINAL_TARGET" -ge "$LENGTH_FROMBASEDIR" ]] \
+		&& [[ "${ORIGINAL_TARGET:0:$LENGTH_FROMBASEDIR}" == "$FROMBASEDIR" ]]; then
+			NEW_TARGET="$TOBASEDIR${ORIGINAL_TARGET:$LENGTH_FROMBASEDIR}"
+			break
+		fi
+	done
+	$SYMLINK_COMMAND "$NEW_TARGET" "$NEW_SYMLINK"
+done < <(find "$FROMDIR" -mindepth 1 -type l -print0)
