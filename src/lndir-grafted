@@ -5,19 +5,13 @@ set -e -u -o pipefail
 FROMDIR=""
 TODIR=""
 
+# Helper function to print error message and exit
 function fail {
 	echo "$1" >&2
 	exit 1
 }
 
-# function escape_hyphen {
-# 	if [[ "${1:0:1}" == "-" ]]; then
-# 		echo "\\$1"
-# 	else
-# 		echo "$1"
-# 	fi
-# }
-
+# "\\-..." -> "-..."
 function deescape_hyphen {
 	if [[ "${1:0:2}" == "\\-" ]]; then
 		echo "${1:1}"
@@ -25,6 +19,8 @@ function deescape_hyphen {
 		echo "$1"
 	fi
 }
+
+# Parse command-line arguments
 
 if [[ "$#" -eq 0 ]]; then
 	fail "Require FROMDIR and TODIR"
@@ -128,19 +124,23 @@ fi
 
 N_BASEDIR="${#ARR_FROMBASEDIR[@]}"
 
+# Manage directories
 while IFS= read -d $'\0' -r ORIGINAL_DIR; do
 	$MKDIR_COMMAND "$TODIR${ORIGINAL_DIR:$LENGTH_FROMDIR}"
 done < <(find "$FROMDIR" -mindepth 1 -type d -print0)
 
+# Manage regular files
 while IFS= read -d $'\0' -r ORIGINAL_FILE; do
 	$SYMLINK_COMMAND "$ORIGINAL_FILE" "$TODIR${ORIGINAL_FILE:$LENGTH_FROMDIR}"
 done < <(find "$FROMDIR" -mindepth 1 -type f -print0)
 
+# Manage symbolic links
 while IFS= read -d $'\0' -r ORIGINAL_LINK; do
 	NEW_SYMLINK="$TODIR${ORIGINAL_LINK:$LENGTH_FROMDIR}"
 	ORIGINAL_TARGET="$($READLINK_COMMAND "$ORIGINAL_LINK")"
 	LENGTH_ORIGINAL_TARGET="${#ORIGINAL_TARGET}"
 	NEW_TARGET="$ORIGINAL_TARGET"
+	# See if the target needs grafting
 	for ((INDEX_BASEDIR=0;INDEX_BASEDIR<N_BASEDIR;INDEX_BASEDIR++)); do
 		FROMBASEDIR="${ARR_FROMBASEDIR[$INDEX_BASEDIR]}"
 		LENGTH_FROMBASEDIR="${#FROMBASEDIR}"
