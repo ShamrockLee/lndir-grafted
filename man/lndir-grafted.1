@@ -1,0 +1,113 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "LNDIR\-GRAFTED" "1" "June 2021" "" ""
+.
+.SH "NAME"
+\fBlndir\-grafted\fR \- lndir alternative that graft symbolic links
+.
+.SH "SYNOPSIS"
+\fBlndir\-grafted\fR [\fB\-\-graft\fR \fIFROMBASEDIR\fR \fITOBASEDIR\fR] [\fB\-\-no\-default\-grafting\fR] [\fB\-\-mkdir\-command\fR \fIMKDIR_COMMAND\fR] [\fB\-\-symlink\-command\fR \fISYMLINK_COMMAND\fR] [\fB\-\-readlink\-command\fR \fIREADLINK_COMMAND\fR] \fIFROMDIR\fR \fITODIR\fR
+.
+.br
+.
+.SH "DESCRIPTION"
+\fBlndir\-grafted\fR creates a shadow directory of symbolic links referencing the content of the source directory (\fIFROMDIR\fR) as lndir(1) does, but treat the symbolic links inside the \fIFROMDIR\fR specially by replacing the target prefixing the \fIFROMDIR\fR path to the path of \fITODIR\fR\.
+.
+.P
+Note:
+.
+.IP "\(bu" 4
+that Specified path will be thought of as absolute or start from this workspace path and share the same prefix\. The latter is not recommended
+.
+.IP "\(bu" 4
+If there is a leading hyphen ("\-\.\.\."), it should be escaped ("\e\-\.\.\.")
+.
+.IP "\(bu" 4
+No extra trailing path delimiter is expected\.
+.
+.IP "" 0
+.
+.SH "OPTIONS"
+Non\-flag arguments \fIFROMDIR\fR and \fITODIR\fR are required:
+.
+.IP "\(bu" 4
+FROMDIR the directory to reference
+.
+.IP "\(bu" 4
+TODIR the mirroring directory where sub\-directories and symbolic links will be created
+.
+.IP "" 0
+.
+.P
+Arguments to show the help message:
+.
+.TP
+\fB\-\-help\fR
+Display the help message\.
+.
+.P
+Arguments that specify custom grafting:
+.
+.TP
+\fB\-\-graft\fR \fIFROMBASEDIR\fR \fITOBASEDIR\fR
+Graft symbolic link from \fIFROMBASEDIR\fR to \fITOBASEDIR\fR If \fIFROMDIR\fR contains a symbolic link whose target path starts with the \fIFROMBASEDIR\fR, that part will be replaced with \fITOBASEDIR\fR\.
+.
+.IP
+This parameter can be specified multiple times\.
+.
+.IP
+By default, a trailing \fB\-\-graft\fR \fIFROMDIR\fR \fITODIR\fR is assumed\.
+.
+.TP
+\fB\-\-no\-default\-grafting\fR
+Opt out the assumed trailing \fB\-\-graft\fR \fIFROMDIR\fR \fITODIR\fR\.
+.
+.P
+Arguments that specify the commands to use:
+.
+.TP
+\fB\-\-mkdir\-command\fR \fIMKDIR_COMMAND\fR
+Specify the command to create a directory by $MKDIR_COMMAND path/to/directory Default to "mkdir"\.
+.
+.TP
+\fB\-\-symlink\-command\fR \fISYMLINK_COMMAND\fR
+Specify the command to create a symbolic link by $SYMLINK_COMMAND "symlink/target" "path/to/symlink" Default to "ln \-s"
+.
+.TP
+\fB\-\-readlink\-command\fR \fIREADLINK_COMMAND\fR
+Specify the command to read a symbolic link by $READLINK_COMMAND "path/to/symlink" Default to "readlink"
+.
+.SH "EXAMPLES"
+Simple demostration inside /dev/shm:
+.
+.IP "" 4
+.
+.nf
+
+$ tree /dev/shm/fromdir
+/dev/shm/fromdir
+└── test_dir
+    ├── tes_link1 \-> /dev/shm/fromdir/test_dir/test_file
+    ├── test_file
+    └── test_link2 \-> \./test_file
+
+1 directory, 3 files
+
+$ mkdir /dev/shm/todir
+$ lndir\-grafted /dev/shm/fromdir /dev/shm/todir
+$ tree /dev/shm/todir
+/dev/shm/todir
+└── test_dir
+    ├── tes_link1 \-> /dev/shm/todir/test_dir/test_file
+    ├── test_file \-> /dev/shm/fromdir/test_dir/test_file
+    └── test_link2 \-> \./test_file
+
+1 directory, 3 files
+.
+.fi
+.
+.IP "" 0
+.
+.SH "SEE ALSO"
+lndir(1), ln(1)

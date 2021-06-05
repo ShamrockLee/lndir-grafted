@@ -42,48 +42,24 @@ while [[ "$#" -gt 0 ]]; do
 		-h|--help)
 			cat<<END_HELP_MESSAGE
 Usage:
-    lndir-grafted [OPTIONS] FROMDIR TODIR
+    lndir-grafted \\
+    [--graft FROMBASEDIR TOBASEDIR] \\
+    [--no-default-grafting] \\
+    [--mkdir-command MKDIR_COMMAND] \\
+    [--symlink-command SYMLINK_COMMAND] \\
+    [--readlink-command READLINK_COMMAND] \\
+    FROMDIR TODIR
+
     lndir-grafted [OPTIONS] -- FROMDIR TODIR
-    lndir-grafted FROMDIR TODIR --graft FROMBASEDIR1 TOBASEDIR1 --graft FROMBASEDIR2 TOBASEDIR2
 
-lndir alternative that properly graft the symbolic links
+    lndir-grafted FROMDIR TODIR \\
+        --graft FROMBASEDIR1 TOBASEDIR1 \\
+        --graft FROMBASEDIR2 TOBASEDIR2
 
-Note:
-    Specified path will be thought of as absolute
-    or start from this workspace path and share the same prefix.
-    If there is a leading hyphen ("-..."), it should be escaped ("\\-...")
-    No extra trailing path delimiter is expected.
+lndir alternative that grafts the symbolic links
+to the destination directory tree
 
-Options:
-  --help                    Print this help message and exit
-
-  --graft FROMBASEDIR TOBASEDIR      If the target of a symlink
-                            begins with \$FROMBASEDIR,
-                            the preceeding part of the target
-                            will be replaced with \$TOBASEDIR
-                            This can be specified multiple times
-                            and substitutions will be done respectively.
-                            However, at most one substitution will be done
-                            for each target path.
-                            Assume trailing \`--graft \$FROMDIR \$TODIR\`
-
-  --no-default-grafting     Opt-out the default behavior of
-                            \`--graft \$FROMDIR \$TODIR\`
-
-  --mkdir-command MKDIR_COMMAND     Specify the command
-                            to create a directory by
-                            \`\$MKDIR_COMMAND "path/to/directory"\`
-                            Default to "mkdir"
-
-  --symlink-command SYMLINK_COMMAND     Specify the command
-                            to create a symbolic link by
-                            \`\$SYMLINK_COMMAND "symlink/target/content" "path/to/symlink"\`
-                            Default to "ln -s"
-
-  --readlink-command SYMLINK_COMMAND     Specify the command
-                            to read the target of a symbolic link by
-                            \`\$READLINK_COMMAND "path/to/symlink"\`
-                            Default to "readlink"
+See \`man 1 lndir-grafted' for more details.
 END_HELP_MESSAGE
 			exit 0
 			;;

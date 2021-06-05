@@ -1,0 +1,106 @@
+lndir-grafted(1) -- lndir alternative that graft symbolic links
+========
+
+## SYNOPSIS
+
+`lndir-grafted`
+[`--graft` <FROMBASEDIR> <TOBASEDIR>]
+[`--no-default-grafting`]
+[`--mkdir-command` <MKDIR_COMMAND>]
+[`--symlink-command` <SYMLINK_COMMAND>]
+[`--readlink-command` <READLINK_COMMAND>]
+<FROMDIR> <TODIR><br>
+
+## DESCRIPTION
+
+**lndir-grafted** creates a shadow directory of symbolic links
+referencing the content of the source directory (<FROMDIR>) as lndir(1) does,
+but treat the symbolic links inside the <FROMDIR> specially
+by replacing the target prefixing the <FROMDIR> path to the path of <TODIR>.
+
+Note:
+
+*	that Specified path will be thought of as absolute
+    or start from this workspace path and share the same prefix.
+    The latter is not recommended
+
+*	If there is a leading hyphen ("-..."), it should be escaped ("\\-...")
+
+*	No extra trailing path delimiter is expected.
+
+## OPTIONS
+
+Non-flag arguments <FROMDIR> and <TODIR> are required:
+
+*	FROMDIR the directory to reference
+
+*	TODIR the mirroring directory
+	where sub-directories and symbolic links will be created
+
+Arguments to show the help message:
+
+*	`--help`:
+	Display the help message.
+
+Arguments that specify custom grafting:
+
+*	`--graft` <FROMBASEDIR> <TOBASEDIR>:
+	Graft symbolic link from <FROMBASEDIR> to <TOBASEDIR>
+	If <FROMDIR> contains a symbolic link whose target path
+	starts with the <FROMBASEDIR>,
+	that part will be replaced with <TOBASEDIR>.
+
+	This parameter can be specified multiple times.
+
+	By default, a trailing `--graft` <FROMDIR> <TODIR> is assumed.
+
+*	`--no-default-grafting`:
+	Opt out the assumed trailing `--graft` <FROMDIR> <TODIR>.
+
+Arguments that specify the commands to use:
+
+*	`--mkdir-command` <MKDIR_COMMAND>:
+	Specify the command to create a directory by
+	$MKDIR_COMMAND path/to/directory
+	Default to "mkdir".
+
+*	`--symlink-command` <SYMLINK_COMMAND>:
+	Specify the command to create a symbolic link by
+	$SYMLINK_COMMAND "symlink/target" "path/to/symlink"
+	Default to "ln -s"
+
+*	`--readlink-command` <READLINK_COMMAND>:
+	Specify the command to read a symbolic link by
+	$READLINK_COMMAND "path/to/symlink"
+	Default to "readlink"
+
+## EXAMPLES
+
+Simple demostration inside /dev/shm:
+
+```
+$ tree /dev/shm/fromdir
+/dev/shm/fromdir
+└── test_dir
+    ├── tes_link1 -> /dev/shm/fromdir/test_dir/test_file
+    ├── test_file
+    └── test_link2 -> ./test_file
+
+1 directory, 3 files
+
+$ mkdir /dev/shm/todir
+$ lndir-grafted /dev/shm/fromdir /dev/shm/todir
+$ tree /dev/shm/todir
+/dev/shm/todir
+└── test_dir
+    ├── tes_link1 -> /dev/shm/todir/test_dir/test_file
+    ├── test_file -> /dev/shm/fromdir/test_dir/test_file
+    └── test_link2 -> ./test_file
+
+1 directory, 3 files
+
+```
+
+## SEE ALSO
+
+lndir(1), ln(1)
