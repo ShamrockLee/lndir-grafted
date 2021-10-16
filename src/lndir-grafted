@@ -12,7 +12,7 @@ function fail {
 }
 
 # "\\-..." -> "-..."
-function deescape_hyphen {
+function unescape_hyphen {
 	if [[ "${1:0:2}" == "\\-" ]]; then
 		echo "${1:1}"
 	else
@@ -63,8 +63,8 @@ END_HELP_MESSAGE
 			if [[ "$#" -lt 2 ]]; then
 				fail "Require FROMBASEDIR TOBASEDIR after $1"
 			fi
-			ARR_FROMBASEDIR+=("$(deescape_hyphen "$2")")
-			ARR_TOBASEDIR+=("$(deescape_hyphen "$3")")
+			ARR_FROMBASEDIR+=("$(unescape_hyphen "$2")")
+			ARR_TOBASEDIR+=("$(unescape_hyphen "$3")")
 			shift 3
 			;;
 		--no-default-grafting)
@@ -96,8 +96,8 @@ END_HELP_MESSAGE
 			if [[ "$#" -lt 2 ]]; then
 				fail "Require FROMDIR TODIR"
 			fi
-			FROMDIR="$(deescape_hyphen "$2")"
-			TODIR="$(deescape_hyphen "$3")"
+			FROMDIR="$(unescape_hyphen "$2")"
+			TODIR="$(unescape_hyphen "$3")"
 			shift 3
 			break
 			;;
@@ -108,8 +108,8 @@ END_HELP_MESSAGE
 			if [[ "$#" -lt 2 ]]; then
 				fail "Require FROMDIR TODIR"
 			fi
-			FROMDIR="$(deescape_hyphen "$1")"
-			TODIR="$(deescape_hyphen "$2")"
+			FROMDIR="$(unescape_hyphen "$1")"
+			TODIR="$(unescape_hyphen "$2")"
 			shift 2
 			;;
 	esac
