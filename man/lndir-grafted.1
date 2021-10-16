@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "LNDIR\-GRAFTED" "1" "June 2021" "" ""
+.TH "LNDIR\-GRAFTED" "1" "October 2021" "" ""
 .
 .SH "NAME"
 \fBlndir\-grafted\fR \- lndir alternative that graft symbolic links
@@ -15,16 +15,16 @@
 \fBlndir\-grafted\fR creates a shadow directory of symbolic links referencing the content of the source directory (\fIFROMDIR\fR) as lndir(1) does, but treat the symbolic links inside the \fIFROMDIR\fR specially by replacing the target prefixing the \fIFROMDIR\fR path to the path of \fITODIR\fR\.
 .
 .P
-Note:
+Note for \fIFROMDIR\fR and \fITODIR\fR:
 .
 .IP "\(bu" 4
-that Specified path will be thought of as absolute or start from this workspace path and share the same prefix\. The latter is not recommended
+Both paths should be absolute\.
 .
 .IP "\(bu" 4
-If there is a leading hyphen ("\-\.\.\."), it should be escaped ("\e\-\.\.\.")
+If there is a leading hyphen ("\-my/path"), it should be escaped ("\e\-my/path")\.
 .
 .IP "\(bu" 4
-No extra trailing path delimiter is expected\.
+No extra trailing path delimiter is expected\. Use "/my/path" instead of "/my/path/"\.
 .
 .IP "" 0
 .
@@ -32,10 +32,10 @@ No extra trailing path delimiter is expected\.
 Non\-flag arguments \fIFROMDIR\fR and \fITODIR\fR are required:
 .
 .IP "\(bu" 4
-FROMDIR the directory to reference
+FROMDIR the directory to reference\.
 .
 .IP "\(bu" 4
-TODIR the mirroring directory where sub\-directories and symbolic links will be created
+TODIR the mirroring directory where sub\-directories and symbolic links will be created\.
 .
 .IP "" 0
 .

@@ -18,24 +18,22 @@ referencing the content of the source directory (<FROMDIR>) as lndir(1) does,
 but treat the symbolic links inside the <FROMDIR> specially
 by replacing the target prefixing the <FROMDIR> path to the path of <TODIR>.
 
-Note:
+Note for <FROMDIR> and <TODIR>:
 
-*	that Specified path will be thought of as absolute
-    or start from this workspace path and share the same prefix.
-    The latter is not recommended
+*	Both paths should be absolute.
 
-*	If there is a leading hyphen ("-..."), it should be escaped ("\\-...")
+*	If there is a leading hyphen ("-my/path"), it should be escaped ("\\-my/path").
 
-*	No extra trailing path delimiter is expected.
+*	No extra trailing path delimiter is expected. Use "/my/path" instead of "/my/path/".
 
 ## OPTIONS
 
 Non-flag arguments <FROMDIR> and <TODIR> are required:
 
-*	FROMDIR the directory to reference
+*	FROMDIR the directory to reference.
 
 *	TODIR the mirroring directory
-	where sub-directories and symbolic links will be created
+	where sub-directories and symbolic links will be created.
 
 Arguments to show the help message:
 
